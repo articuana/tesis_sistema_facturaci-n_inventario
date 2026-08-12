@@ -21,6 +21,23 @@ const emailTransporter = isSmtpConfigured ? nodemailer.createTransport({
   },
 }) : null;
 
+if (emailTransporter) {
+  emailTransporter.verify()
+    .then(() => {
+      console.log('SMTP: conexión y autenticación correctas.');
+    })
+    .catch((error) => {
+      console.error('SMTP: error de conexión o autenticación:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        responseCode: error.responseCode,
+      });
+    });
+} else {
+  console.error('SMTP: transporter NO creado. Las variables SMTP no están completas.');
+}
+
 const renderInvoiceTemplate = async (data) => {
   const templatePath = path.join(__dirname, '..', 'views', 'factura.ejs');
   return ejs.renderFile(templatePath, data, { async: true });
@@ -95,25 +112,52 @@ const sendReportEmail = async (to, subject, text, pdfBuffer, filename = 'reporte
 };
 
 const sendInvoiceEmail = async (to, subject, text, pdfBuffer, invoiceNumber) => {
+  console.log('EMAIL: entrando a sendInvoiceEmail');
+  console.log('EMAIL: destinatario:', to);
+  console.log('EMAIL: factura:', invoiceNumber);
+  console.log('EMAIL: PDF recibido:', Boolean(pdfBuffer));
+
   if (!isSmtpConfigured || !emailTransporter) {
-    throw new Error('SMTP no está configurado. Define SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASS en .env.');
+    throw new Error(
+      'SMTP no está configurado. Define SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASS en .env.'
+    );
   }
 
-  return emailTransporter.sendMail({
-    from: EMAIL_FROM,
-    to,
-    subject,
-    text,
-    attachments: [
-      {
-        filename: `${invoiceNumber}.pdf`,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
-      },
-    ],
-  });
-};
+  try {
+    console.log('EMAIL: intentando enviar correo...');
 
+    const info = await emailTransporter.sendMail({
+      from: EMAIL_FROM,
+      to,
+      subject,
+      text,
+      attachments: [
+        {
+          filename: `${invoiceNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+
+    console.log('EMAIL: correo enviado correctamente.');
+    console.log('EMAIL: messageId:', info.messageId);
+    console.log('EMAIL: response:', info.response);
+
+    return info;
+
+  } catch (error) {
+    console.error('EMAIL: error al enviar correo:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response,
+    });
+
+    throw error;
+  }
+};
 const getDashboardSummary = async () => {
   const [invoiceCount, productCount, latestProducts, latestInvoices] = await Promise.all([
     pool.query('SELECT COUNT(*)::int AS total FROM invoices'),

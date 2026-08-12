@@ -55,7 +55,9 @@ const generateInvoicePdfBuffer = async (invoiceData) => {
       logoUrl,
     },
   });
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await puppeteer.launch({
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0', url: `http://localhost:${process.env.PORT || 4000}/` });
   const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
@@ -70,7 +72,9 @@ const renderReportTemplate = async (data) => {
 
 const generateReportPdfBuffer = async (reportData) => {
   const html = await renderReportTemplate(reportData);
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await puppeteer.launch({
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0', url: `http://localhost:${process.env.PORT || 4000}/` });
   const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });

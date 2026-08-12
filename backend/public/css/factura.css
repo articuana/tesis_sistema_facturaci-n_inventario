@@ -1,0 +1,196 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f5f5f5;
+    padding:30px;
+}
+
+.factura{
+    width:210mm;
+    min-height:297mm;
+    background:white;
+    margin:auto;
+    padding:35px;
+    border:1px solid #dcdcdc;
+}
+
+/*==============================*/
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    align-items:flex-start;
+    margin-bottom:35px;
+}
+
+.empresa{
+    width:58%;
+}
+
+.datos-factura{
+    width:38%;
+}
+
+.logo{
+    width:110px;
+    margin-bottom:10px;
+}
+
+.empresa h1{
+    color:#0B5ED7;
+    margin-bottom:10px;
+}
+
+.empresa p{
+    margin:4px 0;
+    font-size:14px;
+}
+
+/*==============================*/
+
+.datos-factura{
+    width:320px;
+}
+
+.datos-factura h2{
+    text-align:center;
+    color:#0B5ED7;
+    margin-bottom:15px;
+}
+
+.datos-factura table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.datos-factura th,
+.datos-factura td{
+    text-align:left;
+    padding:8px;
+}
+
+.datos-factura th{
+    background:#0B5ED7;
+    color:white;
+}
+
+.datos-factura td{
+    border:1px solid #d6d6d6;
+}
+
+/*==============================*/
+
+.cliente{
+    margin-bottom:30px;
+}
+
+.cliente h3{
+    background:#0B5ED7;
+    color:white;
+    padding:10px;
+    margin-bottom:15px;
+}
+
+.info{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.info div{
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+/*==============================*/
+
+.productos{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:25px;
+}
+
+.productos{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:25px;
+    table-layout: fixed;
+}
+
+.productos th{
+    background:#0B5ED7;
+    color:white;
+    padding:10px;
+    text-align:left;
+}
+
+.productos td{
+    border:1px solid #ddd;
+    padding:12px;
+    vertical-align: middle;
+}
+
+.productos th:first-child,
+.productos td:first-child{
+    width:55%;
+}
+
+.productos th:nth-child(2),
+.productos th:nth-child(3),
+.productos th:nth-child(4),
+.productos td:nth-child(2),
+.productos td:nth-child(3),
+.productos td:nth-child(4){
+    width:15%;
+    text-align:center;
+}
+
+.productos tbody tr:nth-child(odd){
+    background:#fafafa;
+}
+
+.productos tbody tr:hover{
+    background:#f0f8ff;
+}
+
+/*==============================*/
+
+.totales{
+    width:320px;
+    margin-left:auto;
+    margin-top:30px;
+}
+
+.totales table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.totales td{
+    border:1px solid #ddd;
+    padding:12px;
+}
+
+.total{
+    background:#0B5ED7;
+    color:white;
+    font-weight:bold;
+}
+
+/*==============================*/
+
+footer{
+    margin-top:50px;
+    text-align:center;
+    color:#555;
+}
+
+footer p{
+    margin:8px;
+}

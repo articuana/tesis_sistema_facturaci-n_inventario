@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reporte - <%= periodo %></title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color:#222 }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px }
+    .company { text-align:left }
+    .company h2 { margin:0 }
+    .summary { margin-top:10px; display:flex; gap:20px }
+    .card { border:1px solid #eee; padding:10px 14px; border-radius:6px; background:#fafafa }
+    table { width:100%; border-collapse:collapse; margin-top:14px }
+    th, td { border:1px solid #e6e6e6; padding:8px; text-align:left }
+    th { background:#f1f1f1 }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company">
+      <h2>Restaurante Orense</h2>
+      <div><%= empresa.ruc %> - <%= empresa.direccion %></div>
+      <div>Tel: <%= empresa.telefono %> | Correo: <%= empresa.correo %></div>
+    </div>
+    <div style="text-align:right">
+      <h3>Reporte de ventas</h3>
+      <div><strong>Periodo:</strong> <%= periodo %></div>
+      <div><strong>Generado:</strong> <%= new Date().toLocaleString('es-EC') %></div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="card"><strong>Ventas totales:</strong> <div style="font-size:18px">$ <%= summary.salesMonth.toFixed(2) %></div></div>
+    <div class="card"><strong>Facturas emitidas:</strong> <div style="font-size:18px"><%= summary.invoicesCount %></div></div>
+  </div>
+
+  <h4 style="margin-top:20px">Ventas por cliente</h4>
+  <table>
+    <thead>
+      <tr><th>Cliente</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      <% if (salesByClient && salesByClient.length) { %>
+        <% salesByClient.forEach(function(row){ %>
+          <tr>
+            <td><%= row.customer_name %></td>
+            <td>$ <%= Number(row.total).toFixed(2) %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="2">No hay ventas registradas en este periodo.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <h4 style="margin-top:20px">Facturas listadas</h4>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Factura</th><th>Cliente</th><th>Total</th><th>Fecha</th></tr>
+    </thead>
+    <tbody>
+      <% if (invoices && invoices.length) { %>
+        <% invoices.forEach(function(inv){ %>
+          <tr>
+            <td><%= inv.id %></td>
+            <td><%= inv.invoice_number %></td>
+            <td><%= inv.customer_name %></td>
+            <td>$ <%= Number(inv.total).toFixed(2) %></td>
+            <td><%= new Date(inv.created_at).toLocaleString('es-EC') %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="5">No hay facturas en este periodo.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</body>
+</html>

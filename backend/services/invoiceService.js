@@ -7,14 +7,34 @@ import fs from 'fs';
 import bwipjs from 'bwip-js';
 import { FacturacionElectronicaEC } from 'facturacion-electronica-ec';
 import PostgresSequenceProvider from './PostgresSequenceProvider.js';
+import path from 'path';
 
 // Initialize FacturacionElectronicaEC SDK if configured
 let fe = null;
 try {
   if (process.env.FE_ENABLE === 'true') {
     const p12Path = process.env.P12_PATH;
-    if (!p12Path) throw new Error('P12_PATH no definido');
+
+    if (!p12Path) {
+      throw new Error('P12_PATH no definido');
+    }
+
+    if (process.env.P12_BASE64) {
+      const directory = path.dirname(p12Path);
+
+      fs.mkdirSync(directory, { recursive: true });
+
+      fs.writeFileSync(
+        p12Path,
+        Buffer.from(process.env.P12_BASE64, 'base64')
+      );
+
+      console.log('Certificado P12 reconstruido correctamente.');
+    }
+
     const p12 = fs.readFileSync(p12Path);
+
+    console.log('Certificado P12 cargado correctamente.');
 
     const emisor = {
       ruc: process.env.EMISOR_RUC || process.env.EMPRESA_RUC || '0999999999001',

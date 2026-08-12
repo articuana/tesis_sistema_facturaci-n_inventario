@@ -4,6 +4,7 @@ import ejs from 'ejs';
 import puppeteer from 'puppeteer';
 import nodemailer from 'nodemailer';
 import { pool } from '../config/database.js';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,7 +57,6 @@ const generateInvoicePdfBuffer = async (invoiceData) => {
     },
   });
   const browser = await puppeteer.launch({
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0', url: `http://localhost:${process.env.PORT || 4000}/` });
@@ -73,7 +73,6 @@ const renderReportTemplate = async (data) => {
 const generateReportPdfBuffer = async (reportData) => {
   const html = await renderReportTemplate(reportData);
   const browser = await puppeteer.launch({
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0', url: `http://localhost:${process.env.PORT || 4000}/` });

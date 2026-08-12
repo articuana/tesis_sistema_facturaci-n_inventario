@@ -315,6 +315,15 @@ textarea {
   flex-wrap: wrap;
 }
 
+.toolbar-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.toolbar-actions {
+  flex-shrink: 0;
+}
+
 .toolbar-help {
   margin: 0.35rem 0 0;
   color: #6b7280;
@@ -322,8 +331,9 @@ textarea {
 }
 
 .filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 1rem;
   flex: 1 1 320px;
   min-width: 0;
@@ -334,10 +344,13 @@ textarea {
   flex-direction: column;
   gap: 0.45rem;
   margin-bottom: 0;
+  flex: 1 1 180px;
+  min-width: 160px;
 }
 
 .filters-grid input {
   margin-top: 0;
+  width: 100%;
 }
 
 .toolbar-card .primary-button {

@@ -21,6 +21,27 @@ const emailTransporter = isSmtpConfigured ? nodemailer.createTransport({
   },
 }) : null;
 
+console.log('[SMTP] Configuración detectada:', {
+  configurado: isSmtpConfigured,
+  host: process.env.SMTP_HOST || '(no definido)',
+  port: process.env.SMTP_PORT || '(no definido)',
+  user: process.env.SMTP_USER ? '(definido)' : '(no definido)',
+  pass: process.env.SMTP_PASS ? '(definido)' : '(no definido)',
+  secure: process.env.SMTP_SECURE || '(no definido)',
+  from: process.env.EMAIL_FROM || '(no definido)',
+});
+
+
+if (emailTransporter) {
+  emailTransporter.verify((error, success) => {
+    if (error) {
+      console.error('[SMTP] Error de conexión:', error.message);
+    } else {
+      console.log('[SMTP] Conexión SMTP verificada correctamente.');
+    }
+  });
+}
+
 if (emailTransporter) {
   emailTransporter.verify()
     .then(() => {

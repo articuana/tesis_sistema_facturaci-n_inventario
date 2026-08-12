@@ -20,6 +20,41 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const allowedOrigins = new Set(
+  [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    process.env.FRONTEND_URL,
+    process.env.ALLOWED_ORIGINS,
+  ]
+    .flatMap((value) => String(value || '').split(',').map((item) => item.trim()).filter(Boolean))
+    .map((origin) => origin.replace(/\/$/, ''))
+);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+
+  try {
+    const { hostname, origin: normalizedOrigin } = new URL(origin);
+    const cleanOrigin = normalizedOrigin.replace(/\/$/, '');
+
+    if (allowedOrigins.has(cleanOrigin)) {
+      return true;
+    }
+
+    const isLocalhost = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname);
+    if (isLocalhost) {
+      return true;
+    }
+
+    return hostname.endsWith('.vercel.app') || hostname.endsWith('.onrender.com');
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) {
@@ -27,16 +62,9 @@ app.use(cors({
       return;
     }
 
-    try {
-      const { hostname, port } = new URL(origin);
-      const isLocalhost = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname);
-
-      if (isLocalhost && port) {
-        callback(null, true);
-        return;
-      }
-    } catch {
-      // Ignoramos orígenes inválidos y los rechazamos por seguridad.
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+      return;
     }
 
     callback(new Error('Origen no permitido por CORS.'));

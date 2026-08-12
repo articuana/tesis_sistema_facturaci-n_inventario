@@ -1,5 +1,5 @@
 -- Archivo de inicialización para PostgreSQL
--- Ejecutar este SQL sobre la base de datos a usar por el proyecto.
+-- Versión limpia: solo incluye columnas que realmente usa la app.
 
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -15,8 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
   joined_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   phone VARCHAR(30),
   location VARCHAR(150),
-  bio TEXT,
-  ci VARCHAR(10),
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -27,23 +25,9 @@ CREATE TABLE IF NOT EXISTS products (
   quantity INTEGER NOT NULL DEFAULT 0,
   code VARCHAR(20) UNIQUE,
   brand VARCHAR(120),
+  product_type VARCHAR(50) NOT NULL DEFAULT 'Bebidas',
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS invoices (
-  id SERIAL PRIMARY KEY,
-  invoice_number VARCHAR(30) NOT NULL UNIQUE,
-  customer_name VARCHAR(180),
-  customer_type VARCHAR(30) NOT NULL DEFAULT 'consumidor_final',
-  customer_identification VARCHAR(20) NOT NULL DEFAULT '9999999999999',
-  customer_address VARCHAR(200),
-  customer_email VARCHAR(255),
-  customer_phone VARCHAR(10),
-  subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
-  tax NUMERIC(12,2) NOT NULL DEFAULT 0,
-  total NUMERIC(12,2) NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS customers (
@@ -59,6 +43,29 @@ CREATE TABLE IF NOT EXISTS customers (
   UNIQUE (identification_type, identification)
 );
 
+CREATE TABLE IF NOT EXISTS invoices (
+  id SERIAL PRIMARY KEY,
+  invoice_number VARCHAR(30) NOT NULL UNIQUE,
+  customer_name VARCHAR(180),
+  customer_type VARCHAR(30) NOT NULL DEFAULT 'consumidor_final',
+  customer_identification VARCHAR(20) NOT NULL DEFAULT '9999999999999',
+  customer_address VARCHAR(200),
+  customer_email VARCHAR(255),
+  customer_phone VARCHAR(10),
+  subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+  tax NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+  clave_acceso VARCHAR(64),
+  numero_autorizacion VARCHAR(64),
+  autorizacion_estado VARCHAR(30),
+  recepcion_estado VARCHAR(30),
+  sri_estado VARCHAR(30),
+  fecha_autorizacion TIMESTAMP WITHOUT TIME ZONE,
+  sri_result JSONB,
+  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS invoice_details (
   id SERIAL PRIMARY KEY,
   invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
@@ -70,22 +77,35 @@ CREATE TABLE IF NOT EXISTS invoice_details (
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS providers (
+  id SERIAL PRIMARY KEY,
+  company VARCHAR(100) NOT NULL,
+  supplier_name VARCHAR(100),
+  product_type VARCHAR(50) NOT NULL,
+  product_type_other VARCHAR(50),
+  scheduled_day VARCHAR(20) NOT NULL,
+  contact_phone VARCHAR(15),
+  contact_mode VARCHAR(20) NOT NULL CHECK (contact_mode IN ('presencial', 'telefono')),
+  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sequences (
+  id SERIAL PRIMARY KEY,
+  estab VARCHAR(3) NOT NULL,
+  pto_emi VARCHAR(3) NOT NULL,
+  doc_type VARCHAR(30) NOT NULL,
+  val BIGINT NOT NULL DEFAULT 0,
+  UNIQUE (estab, pto_emi, doc_type)
+);
+
 CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);
 CREATE INDEX IF NOT EXISTS products_name_idx ON products(name);
 CREATE INDEX IF NOT EXISTS products_code_idx ON products(code);
 CREATE INDEX IF NOT EXISTS invoices_created_at_idx ON invoices(created_at DESC);
+CREATE INDEX IF NOT EXISTS providers_scheduled_day_idx ON providers(scheduled_day);
 
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS subtotal NUMERIC(12,2) NOT NULL DEFAULT 0;
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax NUMERIC(12,2) NOT NULL DEFAULT 0;
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_type VARCHAR(30) NOT NULL DEFAULT 'consumidor_final';
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_identification VARCHAR(20) NOT NULL DEFAULT '9999999999999';
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_address VARCHAR(200);
-ALTER TABLE invoices ALTER COLUMN customer_address TYPE VARCHAR(200);
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255);
-ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(10);
-
--- Usuario administrador inicial (contraseña: admin123)
-INSERT INTO users (username, first_name, last_name, name, email, identification, password_hash, role, is_active, phone, location, bio, ci)
+INSERT INTO users (username, first_name, last_name, name, email, identification, password_hash, role, is_active, phone, location)
 VALUES (
   'admin',
   'Administrador',
@@ -97,8 +117,10 @@ VALUES (
   'admin',
   true,
   '0000000000',
-  'Sistema',
-  'Usuario raíz del sistema',
-  '0000000000'
+  'Sistema'
 )
 ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO sequences (estab, pto_emi, doc_type, val)
+VALUES ('001', '001', 'FACTURA', 0)
+ON CONFLICT (estab, pto_emi, doc_type) DO NOTHING;

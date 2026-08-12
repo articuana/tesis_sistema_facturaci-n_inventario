@@ -9,17 +9,27 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Restaurante Orense <no-reply@orense.com>';
-const isSmtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
-const emailTransporter = isSmtpConfigured ? nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-}) : null;
+const EMAIL_FROM =
+  process.env.EMAIL_FROM ||
+  'Restaurante Orense <no-reply@orense.com>';
+
+const isSmtpConfigured = Boolean(
+  process.env.SMTP_HOST &&
+  process.env.SMTP_USER &&
+  process.env.SMTP_PASS
+);
+
+const emailTransporter = isSmtpConfigured
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
+  : null;
 
 console.log('[SMTP] Configuración detectada:', {
   configurado: isSmtpConfigured,
@@ -28,35 +38,28 @@ console.log('[SMTP] Configuración detectada:', {
   user: process.env.SMTP_USER ? '(definido)' : '(no definido)',
   pass: process.env.SMTP_PASS ? '(definido)' : '(no definido)',
   secure: process.env.SMTP_SECURE || '(no definido)',
-  from: process.env.EMAIL_FROM || '(no definido)',
+  from: EMAIL_FROM,
 });
 
+if (!emailTransporter) {
+  console.error(
+    '[SMTP] ERROR: transporter no creado. Faltan variables SMTP.'
+  );
+} else {
+  console.log('[SMTP] Transporter creado correctamente.');
 
-if (emailTransporter) {
-  emailTransporter.verify((error, success) => {
+  emailTransporter.verify((error) => {
     if (error) {
-      console.error('[SMTP] Error de conexión:', error.message);
-    } else {
-      console.log('[SMTP] Conexión SMTP verificada correctamente.');
-    }
-  });
-}
-
-if (emailTransporter) {
-  emailTransporter.verify()
-    .then(() => {
-      console.log('SMTP: conexión y autenticación correctas.');
-    })
-    .catch((error) => {
-      console.error('SMTP: error de conexión o autenticación:', {
+      console.error('[SMTP] ERROR en verify():', {
         message: error.message,
         code: error.code,
         command: error.command,
         responseCode: error.responseCode,
       });
-    });
-} else {
-  console.error('SMTP: transporter NO creado. Las variables SMTP no están completas.');
+    } else {
+      console.log('[SMTP] Conexión y autenticación SMTP correctas.');
+    }
+  });
 }
 
 const renderInvoiceTemplate = async (data) => {
@@ -179,6 +182,7 @@ const sendInvoiceEmail = async (to, subject, text, pdfBuffer, invoiceNumber) => 
     throw error;
   }
 };
+
 const getDashboardSummary = async () => {
   const [invoiceCount, productCount, latestProducts, latestInvoices] = await Promise.all([
     pool.query('SELECT COUNT(*)::int AS total FROM invoices'),

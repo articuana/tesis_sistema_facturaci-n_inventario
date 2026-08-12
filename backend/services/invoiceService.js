@@ -383,19 +383,37 @@ const createInvoice = async (payload) => {
     });
 
     if (invoiceCustomer.customerEmail) {
+      console.log(
+        'FACTURA: correo del cliente detectado:',
+        invoiceCustomer.customerEmail
+      );
+
       try {
-        await sendInvoiceEmail(
+        console.log('FACTURA: llamando a sendInvoiceEmail...');
+
+        const emailResult = await sendInvoiceEmail(
           invoiceCustomer.customerEmail,
           `Factura Restaurante Orense ${getCurrentInvoiceDate()}`,
           `Adjunto encontrará su factura ${invoiceNumber}. Gracias por preferir Restaurante Orense.`,
           pdfBuffer,
           invoiceNumber
         );
+
+        console.log('FACTURA: sendInvoiceEmail terminó correctamente.');
+        console.log('FACTURA: messageId:', emailResult.messageId);
+
       } catch (emailErr) {
-        console.warn('Error al enviar correo de factura:', emailErr.message || emailErr);
+        console.error('FACTURA: ERROR AL ENVIAR CORREO:', {
+          message: emailErr.message,
+          code: emailErr.code,
+          responseCode: emailErr.responseCode,
+          response: emailErr.response,
+        });
       }
     } else {
-      console.log(`No se envió correo de factura ${invoiceNumber} porque no se proporcionó correo del cliente.`);
+      console.log(
+        `FACTURA: no se envió ${invoiceNumber} porque no existe correo del cliente.`
+      );
     }
 
     

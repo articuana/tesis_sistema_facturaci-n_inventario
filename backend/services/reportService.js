@@ -107,7 +107,7 @@ const sendReportEmail = async (
     attachments: [
       {
         filename,
-        content: pdfBuffer,
+        content: pdfBuffer.toString('base64'),
       },
     ],
   });

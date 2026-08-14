@@ -61,9 +61,21 @@ const generateInvoicePdfBuffer = async (invoiceData) => {
     args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0', url: `http://localhost:${process.env.PORT || 4000}/` });
-  const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
+  const pdfData = await page.pdf({
+  format: 'A4',
+  printBackground: true,
+  margin: {
+    top: '20mm',
+    bottom: '20mm',
+    left: '15mm',
+    right: '15mm'
+    }
+  });
+
   await browser.close();
+
   const pdfBuffer = Buffer.from(pdfData);
+
   return pdfBuffer;
 };
 

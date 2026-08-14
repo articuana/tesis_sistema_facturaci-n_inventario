@@ -2,7 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import ejs from 'ejs';
 import puppeteer from 'puppeteer';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { pool } from '../config/database.js';
 import fs from 'fs';
 
@@ -11,56 +11,16 @@ const __dirname = path.dirname(__filename);
 
 const EMAIL_FROM =
   process.env.EMAIL_FROM ||
-  'Restaurante Orense <no-reply@orense.com>';
+  'Restaurante Orense <onboarding@resend.dev>';
 
-const isSmtpConfigured = Boolean(
-  process.env.SMTP_HOST &&
-  process.env.SMTP_USER &&
-  process.env.SMTP_PASS
-);
-
-const emailTransporter = isSmtpConfigured
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    })
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-console.log('[SMTP] Configuración detectada:', {
-  configurado: isSmtpConfigured,
-  host: process.env.SMTP_HOST || '(no definido)',
-  port: process.env.SMTP_PORT || '(no definido)',
-  user: process.env.SMTP_USER ? '(definido)' : '(no definido)',
-  pass: process.env.SMTP_PASS ? '(definido)' : '(no definido)',
-  secure: process.env.SMTP_SECURE || '(no definido)',
+console.log('[RESEND] Configuración detectada:', {
+  configurado: Boolean(process.env.RESEND_API_KEY),
   from: EMAIL_FROM,
 });
-
-if (!emailTransporter) {
-  console.error(
-    '[SMTP] ERROR: transporter no creado. Faltan variables SMTP.'
-  );
-} else {
-  console.log('[SMTP] Transporter creado correctamente.');
-
-  emailTransporter.verify((error) => {
-    if (error) {
-      console.error('[SMTP] ERROR en verify():', {
-        message: error.message,
-        code: error.code,
-        command: error.command,
-        responseCode: error.responseCode,
-      });
-    } else {
-      console.log('[SMTP] Conexión y autenticación SMTP correctas.');
-    }
-  });
-}
 
 const renderInvoiceTemplate = async (data) => {
   const templatePath = path.join(__dirname, '..', 'views', 'factura.ejs');
@@ -122,67 +82,103 @@ const generateReportPdfBuffer = async (reportData) => {
   return pdfBuffer;
 };
 
-const sendReportEmail = async (to, subject, text, pdfBuffer, filename = 'reporte.pdf') => {
-  if (!isSmtpConfigured || !emailTransporter) throw new Error('SMTP no está configurado.');
-  return emailTransporter.sendMail({
+const sendReportEmail = async (
+  to,
+  subject,
+  text,
+  pdfBuffer,
+  filename = 'reporte.pdf'
+) => {
+  if (!resend) {
+    throw new Error(
+      'Resend no está configurado. Define RESEND_API_KEY en las variables de entorno.'
+    );
+  }
+
+  if (!pdfBuffer) {
+    throw new Error('No se recibió el PDF del reporte.');
+  }
+
+  const { data, error } = await resend.emails.send({
     from: EMAIL_FROM,
-    to,
+    to: [to],
     subject,
     text,
     attachments: [
-      { filename, content: pdfBuffer, contentType: 'application/pdf' },
+      {
+        filename,
+        content: pdfBuffer,
+      },
     ],
   });
+
+  if (error) {
+    console.error('REPORT EMAIL: error de Resend:', error);
+    throw new Error(error.message || 'No se pudo enviar el reporte.');
+  }
+
+  console.log('REPORT EMAIL: enviado correctamente:', data?.id);
+
+  return data;
 };
 
-const sendInvoiceEmail = async (to, subject, text, pdfBuffer, invoiceNumber) => {
+const sendInvoiceEmail = async (
+  to,
+  subject,
+  text,
+  pdfBuffer,
+  invoiceNumber
+) => {
   console.log('EMAIL: entrando a sendInvoiceEmail');
   console.log('EMAIL: destinatario:', to);
   console.log('EMAIL: factura:', invoiceNumber);
   console.log('EMAIL: PDF recibido:', Boolean(pdfBuffer));
 
-  if (!isSmtpConfigured || !emailTransporter) {
+  if (!resend) {
     throw new Error(
-      'SMTP no está configurado. Define SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASS en .env.'
+      'Resend no está configurado. Define RESEND_API_KEY en las variables de entorno.'
     );
   }
 
-  try {
-    console.log('EMAIL: intentando enviar correo...');
+  if (!pdfBuffer) {
+    throw new Error('No se recibió el PDF de la factura.');
+  }
 
-    const info = await emailTransporter.sendMail({
+  try {
+    console.log('EMAIL: intentando enviar correo mediante Resend...');
+
+    const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
-      to,
+      to: [to],
       subject,
       text,
       attachments: [
         {
           filename: `${invoiceNumber}.pdf`,
           content: pdfBuffer,
-          contentType: 'application/pdf',
         },
       ],
     });
 
-    console.log('EMAIL: correo enviado correctamente.');
-    console.log('EMAIL: messageId:', info.messageId);
-    console.log('EMAIL: response:', info.response);
+    if (error) {
+      console.error('EMAIL: error devuelto por Resend:', error);
+      throw new Error(error.message || 'Resend no pudo enviar el correo.');
+    }
 
-    return info;
+    console.log('EMAIL: correo enviado correctamente mediante Resend.');
+    console.log('EMAIL: messageId:', data?.id);
+
+    return data;
 
   } catch (error) {
-    console.error('EMAIL: error al enviar correo:', {
+    console.error('EMAIL: error al enviar correo mediante Resend:', {
       message: error.message,
-      code: error.code,
-      command: error.command,
-      responseCode: error.responseCode,
-      response: error.response,
+      name: error.name,
     });
 
     throw error;
   }
 };
-
 const getDashboardSummary = async () => {
   const [invoiceCount, productCount, latestProducts, latestInvoices] = await Promise.all([
     pool.query('SELECT COUNT(*)::int AS total FROM invoices'),

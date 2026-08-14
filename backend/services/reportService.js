@@ -82,20 +82,7 @@ const generateReportPdfBuffer = async (reportData) => {
   return pdfBuffer;
 };
 
-const pdfBase64 = pdfBuffer.toString('base64');
 
-const { data, error } = await resend.emails.send({
-  from: EMAIL_FROM,
-  to: [to],
-  subject,
-  text,
-  attachments: [
-    {
-      filename: `${invoiceNumber}.pdf`,
-      content: pdfBase64,
-    },
-  ],
-});
 
 const sendReportEmail = async (
   to,
@@ -169,7 +156,6 @@ const sendInvoiceEmail = async (
       : 'NO ES BUFFER'
   );
 
-
   try {
     console.log('EMAIL: intentando enviar correo mediante Resend...');
 
@@ -205,6 +191,7 @@ const sendInvoiceEmail = async (
     throw error;
   }
 };
+
 const getDashboardSummary = async () => {
   const [invoiceCount, productCount, latestProducts, latestInvoices] = await Promise.all([
     pool.query('SELECT COUNT(*)::int AS total FROM invoices'),

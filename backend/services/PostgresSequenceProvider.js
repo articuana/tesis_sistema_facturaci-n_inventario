@@ -39,11 +39,11 @@ export class PostgresSequenceProvider {
   }
 
   async rollback(estab, ptoEmi, docType) {
-    // Decrement last value (useful when SRI devuelve DEVUELTO)
-    await pool.query(
-      `UPDATE sequences SET val = GREATEST(val - 1, 0) WHERE estab=$1 AND pto_emi=$2 AND doc_type=$3`,
-      [estab, ptoEmi, docType]
-    );
+    console.log('[Sequence] No se realiza rollback del secuencial:', {
+      estab,
+      ptoEmi,
+      docType
+    });
   }
 }
 

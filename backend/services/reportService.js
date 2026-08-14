@@ -155,7 +155,7 @@ const sendInvoiceEmail = async (
       attachments: [
         {
           filename: `${invoiceNumber}.pdf`,
-          content: pdfBuffer,
+          content: pdfBuffer.toString('base64'),
         },
       ],
     });

@@ -82,6 +82,21 @@ const generateReportPdfBuffer = async (reportData) => {
   return pdfBuffer;
 };
 
+const pdfBase64 = pdfBuffer.toString('base64');
+
+const { data, error } = await resend.emails.send({
+  from: EMAIL_FROM,
+  to: [to],
+  subject,
+  text,
+  attachments: [
+    {
+      filename: `${invoiceNumber}.pdf`,
+      content: pdfBase64,
+    },
+  ],
+});
+
 const sendReportEmail = async (
   to,
   subject,
@@ -143,6 +158,17 @@ const sendInvoiceEmail = async (
   if (!pdfBuffer) {
     throw new Error('No se recibió el PDF de la factura.');
   }
+
+  console.log('EMAIL: tipo de PDF:', typeof pdfBuffer);
+  console.log('EMAIL: es Buffer:', Buffer.isBuffer(pdfBuffer));
+  console.log('EMAIL: tamaño PDF:', pdfBuffer.length);
+  console.log(
+    'EMAIL: encabezado PDF:',
+    Buffer.isBuffer(pdfBuffer)
+      ? pdfBuffer.subarray(0, 10).toString()
+      : 'NO ES BUFFER'
+  );
+
 
   try {
     console.log('EMAIL: intentando enviar correo mediante Resend...');

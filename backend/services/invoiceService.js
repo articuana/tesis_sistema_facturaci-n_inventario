@@ -315,24 +315,35 @@ const createInvoice = async (payload) => {
             );
 
             if (existingInvoice.rowCount > 0) {
-              throw new Error(
-                `El número de factura ${sriInvoiceNumber} ya existe en la base de datos.`
+              console.error(
+                'FACTURA: conflicto de número de factura:',
+                {
+                  sriInvoiceNumber,
+                  invoiceId,
+                  existingInvoiceId: existingInvoice.rows[0].id,
+                  claveAcceso: feResult.claveAcceso,
+                  sriEstado: feResult.estado,
+                }
+              );
+
+              // No continuamos intentando cambiar el número,
+              // pero tampoco lanzamos un error que oculte
+              // la autorización obtenida del SRI.
+            } else {
+              await client.query(
+                `UPDATE invoices
+                SET invoice_number = $1
+                WHERE id = $2`,
+                [sriInvoiceNumber, invoiceId]
+              );
+
+              invoiceNumber = sriInvoiceNumber;
+
+              console.log(
+                'FACTURA: invoice_number sincronizado correctamente:',
+                invoiceNumber
               );
             }
-
-            await client.query(
-              `UPDATE invoices
-              SET invoice_number = $1
-              WHERE id = $2`,
-              [sriInvoiceNumber, invoiceId]
-            );
-
-            invoiceNumber = sriInvoiceNumber;
-
-            console.log(
-              'FACTURA: invoice_number sincronizado correctamente:',
-              invoiceNumber
-            );
           }
 
           await client.query(

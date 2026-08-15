@@ -239,7 +239,7 @@ const createInvoice = async (payload) => {
     const total = roundCurrency(subtotal + tax);
     const invoiceIdResult = await client.query("SELECT nextval(pg_get_serial_sequence('invoices', 'id')) AS id");
     const invoiceId = Number(invoiceIdResult.rows[0].id);
-    const invoiceNumber = `001-001-${String(invoiceId).padStart(9, '0')}`;
+    let invoiceNumber = `001-001-${String(invoiceId).padStart(9, '0')}`;
 
     await client.query(
       `INSERT INTO invoices (id, invoice_number, customer_name, customer_type, customer_identification, customer_address, customer_email, customer_phone, subtotal, tax, total)
@@ -292,24 +292,45 @@ const createInvoice = async (payload) => {
         };
 
         feResult = await fe.emitirFactura(data);
+
         if (feResult) {
+          // Si el SRI/librería generó un secuencial,
+          // usamos ese mismo valor para el número de factura.
+          if (feResult.secuencial) {
+            invoiceNumber = `001-001-${String(feResult.secuencial).padStart(9, '0')}`;
+
+            console.log(
+              'FACTURA: sincronizando invoice_number con secuencial SRI:',
+              invoiceNumber
+            );
+
+            await client.query(
+              `UPDATE invoices
+              SET invoice_number = $1
+              WHERE id = $2`,
+              [invoiceNumber, invoiceId]
+            );
+          }
+
           await client.query(
             `UPDATE invoices
-             SET clave_acceso = $1,
-                 numero_autorizacion = $2,
-                 autorizacion_estado = $3,
-                 recepcion_estado = $4,
-                 sri_estado = $5,
-                 fecha_autorizacion = $6,
-                 sri_result = $7
-             WHERE id = $8`,
+            SET clave_acceso = $1,
+                numero_autorizacion = $2,
+                autorizacion_estado = $3,
+                recepcion_estado = $4,
+                sri_estado = $5,
+                fecha_autorizacion = $6,
+                sri_result = $7
+            WHERE id = $8`,
             [
               feResult.claveAcceso || null,
               feResult.numeroAutorizacion || null,
               feResult.autorizacionEstado || null,
               feResult.recepcionEstado || null,
               feResult.estado || null,
-              feResult.fechaAutorizacion ? new Date(feResult.fechaAutorizacion) : null,
+              feResult.fechaAutorizacion
+                ? new Date(feResult.fechaAutorizacion)
+                : null,
               JSON.stringify(feResult),
               invoiceId,
             ]

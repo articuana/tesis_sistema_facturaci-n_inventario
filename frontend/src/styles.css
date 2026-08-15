@@ -22,24 +22,89 @@ textarea {
 }
 
 .app-container {
-  display: grid;
   min-height: 100vh;
-  place-items: center;
   padding: 1rem;
-  background: linear-gradient(135deg, #f2dfab, #f8efe0);
+}
+
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1.25fr 0.95fr;
+  min-height: 100vh;
+  background: url('/login-bg.png') center/cover no-repeat;
+  position: relative;
+}
+
+.auth-layout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 26, 22, 0.5);
+}
+
+.auth-hero,
+.auth-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.auth-copy {
+  max-width: 620px;
+  color: white;
+}
+
+.auth-kicker {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+}
+
+.auth-copy h1 {
+  margin: 0;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  line-height: 1.04;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+}
+
+.auth-copy p {
+  margin-top: 1.25rem;
+  max-width: 560px;
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
 .login-card {
-  width: min(460px, 100%);
-  padding: 2rem;
+  width: min(430px, 100%);
+  padding: 2.2rem;
   border-radius: 24px;
-  background: #fffdf8;
-  box-shadow: 0 20px 60px rgba(60, 120, 48, 0.16);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(4px);
 }
 
-.login-header h1 {
+.login-header h2 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 2rem;
+  color: #1f2937;
 }
 
 .login-header p {
@@ -91,7 +156,7 @@ textarea {
 
 .login-card button {
   width: 100%;
-  background: #2563eb;
+  background: linear-gradient(135deg, #1a5c3d, #2d7a4b);
   color: white;
 }
 

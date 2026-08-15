@@ -17,7 +17,13 @@ export const roundCurrency = (value) => Math.round((Number(value) + Number.EPSIL
 
 export const getCurrentInvoiceDate = () => {
   const now = new Date();
-  return now.toLocaleDateString('es-EC', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+  return now.toLocaleDateString('es-EC', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 };
 
 export const normalizeSpaces = (value) => String(value || '').trim().replace(/\s+/g, ' ');

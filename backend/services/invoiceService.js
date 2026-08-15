@@ -239,7 +239,7 @@ const createInvoice = async (payload) => {
     const total = roundCurrency(subtotal + tax);
     const invoiceIdResult = await client.query("SELECT nextval(pg_get_serial_sequence('invoices', 'id')) AS id");
     const invoiceId = Number(invoiceIdResult.rows[0].id);
-    let invoiceNumber = `001-001-${String(invoiceId).padStart(9, '0')}`;
+    let invoiceNumber = `TEMP-${invoiceId}`;
 
     await client.query(
       `INSERT INTO invoices (id, invoice_number, customer_name, customer_type, customer_identification, customer_address, customer_email, customer_phone, subtotal, tax, total)
@@ -297,18 +297,41 @@ const createInvoice = async (payload) => {
           // Si el SRI/librería generó un secuencial,
           // usamos ese mismo valor para el número de factura.
           if (feResult.secuencial) {
-            invoiceNumber = `001-001-${String(feResult.secuencial).padStart(9, '0')}`;
+            const sriInvoiceNumber =
+              `001-001-${String(feResult.secuencial).padStart(9, '0')}`;
 
             console.log(
-              'FACTURA: sincronizando invoice_number con secuencial SRI:',
-              invoiceNumber
+              'FACTURA: secuencial generado por SRI:',
+              feResult.secuencial
             );
+
+            const existingInvoice = await client.query(
+              `SELECT id
+              FROM invoices
+              WHERE invoice_number = $1
+                AND id <> $2
+              LIMIT 1`,
+              [sriInvoiceNumber, invoiceId]
+            );
+
+            if (existingInvoice.rowCount > 0) {
+              throw new Error(
+                `El número de factura ${sriInvoiceNumber} ya existe en la base de datos.`
+              );
+            }
 
             await client.query(
               `UPDATE invoices
               SET invoice_number = $1
               WHERE id = $2`,
-              [invoiceNumber, invoiceId]
+              [sriInvoiceNumber, invoiceId]
+            );
+
+            invoiceNumber = sriInvoiceNumber;
+
+            console.log(
+              'FACTURA: invoice_number sincronizado correctamente:',
+              invoiceNumber
             );
           }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_INVOICE_FORM, FOOD_MENU } from '../constants/forms.js';
 import * as invoiceService from '../services/invoiceService.js';
 import { getContactValidationError, getCustomerDetailsValidationError, getCustomerValidationError, normalizeCustomerName, normalizeSpaces } from '../utils/validation.js';
@@ -13,6 +13,8 @@ export function useBilling() {
   const [customerFound, setCustomerFound] = useState(false);
   const [customerLookupMessage, setCustomerLookupMessage] = useState('');
   const [message, setMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const loadInvoices = useCallback(async () => {
     if (!user) return;
     try { const data = await invoiceService.getInvoices(user.role); setInvoices(data.invoices || []); } catch (requestError) { setMessage(requestError.message); }
@@ -51,6 +53,7 @@ export function useBilling() {
   };
   const save = async (event) => {
     event.preventDefault(); setError('');
+    if (savingRef.current) return;
     if (!form.items.length) return setError('Agrega al menos una comida a la factura.');
     if (form.items.some((item) => !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) return setError('Cada comida debe tener una cantidad entera mayor que cero.');
     const customerError = getCustomerValidationError(form.customerType, form.customerIdentification);
@@ -59,6 +62,8 @@ export function useBilling() {
     if (detailsError) return setError(detailsError);
     const contactError = getContactValidationError(form.customerType, form.customerEmail, form.customerPhone);
     if (contactError) return setError(contactError);
+    savingRef.current = true;
+    setSaving(true);
     try {
       await invoiceService.saveInvoice({
         customerType: form.customerType,
@@ -71,6 +76,7 @@ export function useBilling() {
       }, user.role);
       setForm(DEFAULT_INVOICE_FORM); setCustomerFound(false); setCustomerLookupMessage(''); setModalOpen(false); await loadInvoices(); setMessage('Factura creada correctamente.');
     } catch (requestError) { setError(requestError.message); }
+    finally { savingRef.current = false; setSaving(false); }
   };
   const remove = async (id) => {
     if (!window.confirm('¿Ocultar esta factura de la vista?')) return;
@@ -94,5 +100,5 @@ export function useBilling() {
     }
   };
 
-  return { invoices, form, setForm, isModalOpen, setModalOpen, error, message, customerFound, setCustomerFound, customerLookupMessage, setCustomerLookupMessage, openCreate, addItem, updateItemQuantity, removeItem, lookupCustomer, save, remove, downloadInvoice };
+  return { invoices, form, setForm, isModalOpen, setModalOpen, error, message, saving, customerFound, setCustomerFound, customerLookupMessage, setCustomerLookupMessage, openCreate, addItem, updateItemQuantity, removeItem, lookupCustomer, save, remove, downloadInvoice };
 }

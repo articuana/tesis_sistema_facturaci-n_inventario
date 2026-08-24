@@ -3,7 +3,7 @@ import { CUSTOMER_TYPES, FOOD_MENU } from '../../constants/forms.js';
 import { normalizeCustomerName, normalizeSpaces } from '../../utils/validation.js';
 
 export default function InvoiceModal({ billing }) {
-  const { isModalOpen, setModalOpen, form, setForm, error, customerFound, setCustomerFound, customerLookupMessage, setCustomerLookupMessage, lookupCustomer, addItem, updateItemQuantity, removeItem, save } = billing;
+  const { isModalOpen, setModalOpen, form, setForm, error, saving, customerFound, setCustomerFound, customerLookupMessage, setCustomerLookupMessage, lookupCustomer, addItem, updateItemQuantity, removeItem, save } = billing;
   if (!isModalOpen) return null;
   const change = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
   const total = form.items.reduce((sum, item) => sum + Number(item.quantity || 0) * item.unitPrice, 0) * 1.15;
@@ -32,6 +32,6 @@ export default function InvoiceModal({ billing }) {
     </div>
     {form.mealType && form.mealType !== 'otro' && <p className="fixed-price-help">Precio fijo de {FOOD_MENU[form.mealType].label}: <strong>${FOOD_MENU[form.mealType].price.toFixed(2)}</strong></p>}
     {form.items.length > 0 && <div className="invoice-items">{form.items.map((item, index) => <div className="invoice-item" key={`${item.itemName}-${index}`}><span>{item.itemName}</span><label className="invoice-item-quantity">Cantidad<input type="number" min="1" step="1" value={item.quantity} onChange={(event) => updateItemQuantity(index, event.target.value)} /></label><strong>${(item.quantity * item.unitPrice).toFixed(2)}</strong><button type="button" className="mini-button danger" onClick={() => removeItem(index)}>Quitar</button></div>)}</div>}
-    {error && <p className="status-message">{error}</p>}<div className="invoice-total-preview"><span>Total con IVA</span><strong>${total.toFixed(2)}</strong></div><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setModalOpen(false)}>Cancelar</button><button type="submit" className="primary-button">Guardar factura</button></div>
+    {error && <p className="status-message">{error}</p>}<div className="invoice-total-preview"><span>Total con IVA</span><strong>${total.toFixed(2)}</strong></div><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setModalOpen(false)} disabled={saving}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? 'Enviando...' : 'Guardar factura'}</button></div>
   </form></ModalShell>;
 }
